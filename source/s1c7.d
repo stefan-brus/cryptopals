@@ -7,9 +7,10 @@
 
 module s1c7;
 
-import aes;
-import array;
-import encode;
+import crypto.aes;
+
+import util.array;
+import util.encode;
 
 import std.stdio;
 

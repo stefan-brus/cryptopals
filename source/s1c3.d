@@ -17,10 +17,11 @@
 
 module s1c3;
 
-import array;
-import decrypt;
-import encode;
-import encrypt;
+import crypto.decrypt;
+import crypto.encrypt;
+
+import util.array;
+import util.encode;
 
 import std.stdio;
 

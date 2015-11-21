@@ -10,10 +10,11 @@
 
 module s1c4;
 
-import array;
-import decrypt;
-import encode;
-import encrypt;
+import crypto.decrypt;
+import crypto.encrypt;
+
+import util.array;
+import util.encode;
 
 import std.stdio;
 import std.string;

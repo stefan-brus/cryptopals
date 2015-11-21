@@ -2,11 +2,12 @@
  * Decryption utilities
  */
 
-module decrypt;
+module crypto.decrypt;
 
-import array;
-import encrypt;
-import strings;
+import crypto.encrypt;
+
+import util.array;
+import util.strings;
 
 import std.algorithm;
 import std.ascii;

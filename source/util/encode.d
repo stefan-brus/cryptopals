@@ -2,9 +2,9 @@
  * Encoding utilities
  */
 
-module encode;
+module util.encode;
 
-import array;
+import util.array;
 
 import std.exception;
 import std.string;

@@ -2,7 +2,7 @@
  * Array utilities
  */
 
-module array;
+module util.array;
 
 import std.algorithm;
 import std.traits;

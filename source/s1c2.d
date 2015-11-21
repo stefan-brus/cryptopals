@@ -16,8 +16,9 @@
 
 module s1c2;
 
-import encode;
-import encrypt;
+import crypto.encrypt;
+
+import util.encode;
 
 import std.stdio;
 

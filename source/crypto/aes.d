@@ -2,11 +2,11 @@
  * Highly experimental AES functions
  */
 
-module aes;
+module crypto.aes;
 
-import array;
-import encode;
-import strings;
+import util.array;
+import util.encode;
+import util.strings;
 
 import std.exception;
 import std.format;

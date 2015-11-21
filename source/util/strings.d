@@ -2,9 +2,9 @@
  * String utilities
  */
 
-module strings;
+module util.strings;
 
-import array;
+import util.array;
 
 /**
  * Convenience alias for mapping a function to a string

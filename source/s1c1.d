@@ -16,7 +16,7 @@
 
 module s1c1;
 
-import encode;
+import util.encode;
 
 import std.stdio;
 

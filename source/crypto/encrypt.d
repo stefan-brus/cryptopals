@@ -2,9 +2,9 @@
  * Encryption utilities
  */
 
-module encrypt;
+module crypto.encrypt;
 
-import array;
+import util.array;
 
 /**
  * XOR two strings

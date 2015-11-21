@@ -7,9 +7,10 @@
 
 module s1c8;
 
-import array;
-import decrypt;
-import encode;
+import crypto.decrypt;
+
+import util.array;
+import util.encode;
 
 import std.stdio;
 
