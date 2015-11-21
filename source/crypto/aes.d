@@ -4,6 +4,8 @@
 
 module crypto.aes;
 
+import crypto.padding;
+
 import util.array;
 import util.encode;
 import util.strings;
@@ -136,7 +138,7 @@ struct AES ( uint BitSize )
             }
             else
             {
-                auto tmp = bytes[i .. $].paddedSplitN(4, 0);
+                auto tmp = bytes[i .. $].pkcs7Pad(BLOCK_SIZE - bytes[i .. $].length).paddedSplitN(4, 0);
 
                 while ( tmp.length < 4 )
                 {
@@ -245,7 +247,7 @@ struct AES ( uint BitSize )
             }
             else
             {
-                auto tmp = bytes[i .. $].paddedSplitN(4, 0);
+                auto tmp = bytes[i .. $].pkcs7Pad(BLOCK_SIZE - bytes[i .. $].length).paddedSplitN(4, 0);
 
                 while ( tmp.length < 4 )
                 {
