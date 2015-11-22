@@ -1,11 +1,11 @@
 /**
- * Set 1 Challenge 7
- * AES in ECB mode
+ * Set 2 Challenge 10
+ * Implement CBC mode
  *
- * http://cryptopals.com/sets/1/challenges/7/
+ * http://cryptopals.com/sets/2/challenges/10/
  */
 
-module s1c7;
+module s2c2;
 
 import crypto.aes;
 
@@ -18,7 +18,7 @@ import std.stdio;
  * Constants
  */
 
-enum FILE_PATH = "data/7.txt";
+enum FILE_PATH = "data/10.txt";
 enum WHITESPACE = " \n\r\t";
 enum KEY = "YELLOW SUBMARINE";
 
@@ -38,7 +38,8 @@ void main ( )
 
     auto stripped = lines_buf.flatten().removeAll(WHITESPACE);
     auto decoded = decodeBase64(stripped);
+    auto iv = replicate!ubyte(16, 0);
     auto aes128 = AES!128();
 
-    writeln(aes128.decryptECB(decoded, KEY));
+    writeln(aes128.decryptCBC(decoded, KEY, iv));
 }

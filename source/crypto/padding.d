@@ -28,12 +28,7 @@ body
 {
     auto pad = cast(char)(len - str.length);
 
-    while ( str.length < len )
-    {
-        str ~= pad;
-    }
-
-    return str;
+    return str.padBytes(len, pad);
 }
 
 unittest
@@ -41,4 +36,31 @@ unittest
     import util.strings;
 
     assert("YELLOW SUBMARINE".toBytes().pkcs7Pad(20) == "YELLOW SUBMARINE".toBytes() ~ cast(ubyte[])[4, 4, 4, 4]);
+}
+
+/**
+ * Pad the given bytes to the given length with the given byte
+ *
+ * Params:
+ *      bytes = The bytes
+ *      len = The length
+ *      pad = The byte to pad with
+ *
+ * Returns:
+ *      The padded byte array
+ */
+
+ubyte[] padBytes ( ubyte[] bytes, size_t len, ubyte pad )
+in
+{
+    assert(len >= bytes.length);
+}
+body
+{
+    while ( bytes.length < len )
+    {
+        bytes ~= pad;
+    }
+
+    return bytes;
 }

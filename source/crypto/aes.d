@@ -5,6 +5,7 @@
 module crypto.aes;
 
 import crypto.padding;
+import crypto.rijndael;
 
 import util.array;
 import util.encode;
@@ -107,7 +108,7 @@ struct AES ( uint BitSize )
     /**
      * Encrypt the given text with the given key
      *
-     * Currently only supports ECB mode:
+     * ECB mode:
      * Break the text into BLOCK_SIZE blocks, copy the block into the state
      * Run AES on the state and add it to the result
      *
@@ -119,7 +120,7 @@ struct AES ( uint BitSize )
      *      The encrypted text
      */
 
-    string encrypt ( string text, string key )
+    string encryptECB ( string text, string key )
     {
         enforce(key.length == BitSize / 8, format("AES%d: Invalid key length", BitSize));
 
@@ -132,20 +133,13 @@ struct AES ( uint BitSize )
 
         for ( auto i = 0; i < bytes.length; i+= BLOCK_SIZE )
         {
-            if ( i + BLOCK_SIZE < bytes.length )
+            if ( i + BLOCK_SIZE <= bytes.length )
             {
                 this.state = toState(bytes[i .. i + BLOCK_SIZE].paddedSplitN(4, 0));
             }
             else
             {
-                auto tmp = bytes[i .. $].pkcs7Pad(BLOCK_SIZE - bytes[i .. $].length).paddedSplitN(4, 0);
-
-                while ( tmp.length < 4 )
-                {
-                    tmp ~= [0, 0, 0, 0];
-                }
-
-                this.state = toState(tmp);
+                this.state = toState(bytes[i .. $].pkcs7Pad(BLOCK_SIZE).paddedSplitN(4, 0));
             }
 
             this.encryptBlock();
@@ -173,10 +167,10 @@ struct AES ( uint BitSize )
         auto test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
         auto expected4 = "7b0c785e27e8ad3f8223207104725dd4".decodeHex();
 
-        assert(aes128.encrypt(test1, key128) == expected1);
-        assert(aes128.encrypt(test2, key128) == expected2);
-        assert(aes128.encrypt(test3, key128) == expected3);
-        assert(aes128.encrypt(test4, key128) == expected4);
+        assert(aes128.encryptECB(test1, key128) == expected1);
+        assert(aes128.encryptECB(test2, key128) == expected2);
+        assert(aes128.encryptECB(test3, key128) == expected3);
+        assert(aes128.encryptECB(test4, key128) == expected4);
 
         auto aes192 = AES!192();
         auto key192 = "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b".decodeHex();
@@ -190,10 +184,10 @@ struct AES ( uint BitSize )
         test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
         expected4 = "9a4b41ba738d6c72fb16691603c18e0e".decodeHex();
 
-        assert(aes192.encrypt(test1, key192) == expected1);
-        assert(aes192.encrypt(test2, key192) == expected2);
-        assert(aes192.encrypt(test3, key192) == expected3);
-        assert(aes192.encrypt(test4, key192) == expected4);
+        assert(aes192.encryptECB(test1, key192) == expected1);
+        assert(aes192.encryptECB(test2, key192) == expected2);
+        assert(aes192.encryptECB(test3, key192) == expected3);
+        assert(aes192.encryptECB(test4, key192) == expected4);
 
         auto aes256 = AES!256();
         auto key256 = "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4".decodeHex();
@@ -207,16 +201,16 @@ struct AES ( uint BitSize )
         test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
         expected4 = "23304b7a39f9f3ff067d8d8f9e24ecc7".decodeHex();
 
-        assert(aes256.encrypt(test1, key256) == expected1);
-        assert(aes256.encrypt(test2, key256) == expected2);
-        assert(aes256.encrypt(test3, key256) == expected3);
-        assert(aes256.encrypt(test4, key256) == expected4);
+        assert(aes256.encryptECB(test1, key256) == expected1);
+        assert(aes256.encryptECB(test2, key256) == expected2);
+        assert(aes256.encryptECB(test3, key256) == expected3);
+        assert(aes256.encryptECB(test4, key256) == expected4);
     }
 
     /**
      * Decrypt the given text with the given key
      *
-     * Currently only supports ECB mode:
+     * ECB mode:
      * Break the text into BLOCK_SIZE blocks, copy the block into the state
      * Run inverse AES on the state and add it to the result
      *
@@ -228,7 +222,7 @@ struct AES ( uint BitSize )
      *      The decrypted text
      */
 
-    string decrypt ( string text, string key )
+    string decryptECB ( string text, string key )
     {
         enforce(key.length == BitSize / 8, format("AES%d: Invalid key length", BitSize));
 
@@ -241,20 +235,13 @@ struct AES ( uint BitSize )
 
         for ( auto i = 0; i < bytes.length; i+= BLOCK_SIZE )
         {
-            if ( i + BLOCK_SIZE < bytes.length )
+            if ( i + BLOCK_SIZE <= bytes.length )
             {
                 this.state = toState(bytes[i .. i + BLOCK_SIZE].paddedSplitN(4, 0));
             }
             else
             {
-                auto tmp = bytes[i .. $].pkcs7Pad(BLOCK_SIZE - bytes[i .. $].length).paddedSplitN(4, 0);
-
-                while ( tmp.length < 4 )
-                {
-                    tmp ~= [0, 0, 0, 0];
-                }
-
-                this.state = toState(tmp);
+                this.state = toState(bytes[i .. $].pkcs7Pad(BLOCK_SIZE).paddedSplitN(4, 0));
             }
 
             this.decryptBlock();
@@ -282,10 +269,10 @@ struct AES ( uint BitSize )
         auto test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
         auto cipher4 = "7b0c785e27e8ad3f8223207104725dd4".decodeHex();
 
-        assert(aes128.decrypt(cipher1, key128) == test1);
-        assert(aes128.decrypt(cipher2, key128) == test2);
-        assert(aes128.decrypt(cipher3, key128) == test3);
-        assert(aes128.decrypt(cipher4, key128) == test4);
+        assert(aes128.decryptECB(cipher1, key128) == test1);
+        assert(aes128.decryptECB(cipher2, key128) == test2);
+        assert(aes128.decryptECB(cipher3, key128) == test3);
+        assert(aes128.decryptECB(cipher4, key128) == test4);
 
         auto aes192 = AES!192();
         auto key192 = "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b".decodeHex();
@@ -299,10 +286,10 @@ struct AES ( uint BitSize )
         test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
         cipher4 = "9a4b41ba738d6c72fb16691603c18e0e".decodeHex();
 
-        assert(aes192.decrypt(cipher1, key192) == test1);
-        assert(aes192.decrypt(cipher2, key192) == test2);
-        assert(aes192.decrypt(cipher3, key192) == test3);
-        assert(aes192.decrypt(cipher4, key192) == test4);
+        assert(aes192.decryptECB(cipher1, key192) == test1);
+        assert(aes192.decryptECB(cipher2, key192) == test2);
+        assert(aes192.decryptECB(cipher3, key192) == test3);
+        assert(aes192.decryptECB(cipher4, key192) == test4);
 
         auto aes256 = AES!256();
         auto key256 = "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4".decodeHex();
@@ -316,10 +303,282 @@ struct AES ( uint BitSize )
         test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
         cipher4 = "23304b7a39f9f3ff067d8d8f9e24ecc7".decodeHex();
 
-        assert(aes256.decrypt(cipher1, key256) == test1);
-        assert(aes256.decrypt(cipher2, key256) == test2);
-        assert(aes256.decrypt(cipher3, key256) == test3);
-        assert(aes256.decrypt(cipher4, key256) == test4);
+        assert(aes256.decryptECB(cipher1, key256) == test1);
+        assert(aes256.decryptECB(cipher2, key256) == test2);
+        assert(aes256.decryptECB(cipher3, key256) == test3);
+        assert(aes256.decryptECB(cipher4, key256) == test4);
+    }
+
+    /**
+     * Encrypt the given text with the given key
+     *
+     * CBC mode:
+     * The previous block cipher is added to the plaintext block before the next
+     * cipher is run. The initialization vector is added to the first block.
+     *
+     * Params:
+     *      text = The text
+     *      key = The key
+     *      iv = The initialization vector
+     *
+     * Returns:
+     *      The encrypted text
+     */
+
+    string encryptCBC ( string text, string key, ubyte[] iv )
+    {
+        enforce(key.length == BitSize / 8, format("AES%d: Invalid key length", BitSize));
+        enforce(iv.length == BLOCK_SIZE, format("AES%d: Invalid initialization vector length", BitSize));
+
+        string result;
+
+        this.state = State.init;
+        this.addToState(iv);
+        this.expanded = rijndaelExpandKey(key.toBytes());
+
+        auto bytes = text.toBytes();
+
+        for ( auto i = 0; i < bytes.length; i+= BLOCK_SIZE )
+        {
+            if ( i + BLOCK_SIZE <= bytes.length )
+            {
+                this.addToState(bytes[i .. i + BLOCK_SIZE]);
+            }
+            else
+            {
+                this.addToState(bytes[i .. $].padBytes(BLOCK_SIZE, 0));
+            }
+
+            this.encryptBlock();
+            result ~= fromState(this.state).flatten().fromBytes();
+        }
+
+        result.length = text.length;
+
+        return result;
+    }
+
+    unittest
+    {
+        // Test vectors: http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors#aes-cbc
+
+        auto aes128 = AES!128();
+        auto key128 = "2b7e151628aed2a6abf7158809cf4f3c".decodeHex();
+
+        auto test1 = "6bc1bee22e409f96e93d7e117393172a".decodeHex();
+        auto iv1 = "000102030405060708090A0B0C0D0E0F".decodeHex().toBytes();
+        auto expected1 = "7649abac8119b246cee98e9b12e9197d".decodeHex();
+        auto test2 = "ae2d8a571e03ac9c9eb76fac45af8e51".decodeHex();
+        auto iv2 = "7649ABAC8119B246CEE98E9B12E9197D".decodeHex().toBytes();
+        auto expected2 = "5086cb9b507219ee95db113a917678b2".decodeHex();
+        auto test3 = "30c81c46a35ce411e5fbc1191a0a52ef".decodeHex();
+        auto iv3 = "5086CB9B507219EE95DB113A917678B2".decodeHex().toBytes();
+        auto expected3 = "73bed6b8e3c1743b7116e69e22229516".decodeHex();
+        auto test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
+        auto iv4 = "73BED6B8E3C1743B7116E69E22229516".decodeHex().toBytes();
+        auto expected4 = "3ff1caa1681fac09120eca307586e1a7".decodeHex();
+
+        assert(aes128.encryptCBC(test1, key128, iv1) == expected1);
+        assert(aes128.encryptCBC(test2, key128, iv2) == expected2);
+        assert(aes128.encryptCBC(test3, key128, iv3) == expected3);
+        assert(aes128.encryptCBC(test4, key128, iv4) == expected4);
+
+        auto aes192 = AES!192();
+        auto key192 = "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b".decodeHex();
+
+        test1 = "6bc1bee22e409f96e93d7e117393172a".decodeHex();
+        iv1 = "000102030405060708090A0B0C0D0E0F".decodeHex().toBytes();
+        expected1 = "4f021db243bc633d7178183a9fa071e8".decodeHex();
+        test2 = "ae2d8a571e03ac9c9eb76fac45af8e51".decodeHex();
+        iv2 = "4F021DB243BC633D7178183A9FA071E8".decodeHex().toBytes();
+        expected2 = "b4d9ada9ad7dedf4e5e738763f69145a".decodeHex();
+        test3 = "30c81c46a35ce411e5fbc1191a0a52ef".decodeHex();
+        iv3 = "B4D9ADA9AD7DEDF4E5E738763F69145A".decodeHex().toBytes();
+        expected3 = "571b242012fb7ae07fa9baac3df102e0".decodeHex();
+        test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
+        iv4 = "571B242012FB7AE07FA9BAAC3DF102E0".decodeHex().toBytes();
+        expected4 = "08b0e27988598881d920a9e64f5615cd".decodeHex();
+
+        assert(aes192.encryptCBC(test1, key192, iv1) == expected1);
+        assert(aes192.encryptCBC(test2, key192, iv2) == expected2);
+        assert(aes192.encryptCBC(test3, key192, iv3) == expected3);
+        assert(aes192.encryptCBC(test4, key192, iv4) == expected4);
+
+        auto aes256 = AES!256();
+        auto key256 = "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4".decodeHex();
+
+        test1 = "6bc1bee22e409f96e93d7e117393172a".decodeHex();
+        iv1 = "000102030405060708090A0B0C0D0E0F".decodeHex().toBytes();
+        expected1 = "f58c4c04d6e5f1ba779eabfb5f7bfbd6".decodeHex();
+        test2 = "ae2d8a571e03ac9c9eb76fac45af8e51".decodeHex();
+        iv2 = "F58C4C04D6E5F1BA779EABFB5F7BFBD6".decodeHex().toBytes();
+        expected2 = "9cfc4e967edb808d679f777bc6702c7d".decodeHex();
+        test3 = "30c81c46a35ce411e5fbc1191a0a52ef".decodeHex();
+        iv3 = "9CFC4E967EDB808D679F777BC6702C7D".decodeHex().toBytes();
+        expected3 = "39f23369a9d9bacfa530e26304231461".decodeHex();
+        test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
+        iv4 = "39F23369A9D9BACFA530E26304231461".decodeHex().toBytes();
+        expected4 = "b2eb05e2c39be9fcda6c19078c6a9d1b".decodeHex();
+
+        assert(aes256.encryptCBC(test1, key256, iv1) == expected1);
+        assert(aes256.encryptCBC(test2, key256, iv2) == expected2);
+        assert(aes256.encryptCBC(test3, key256, iv3) == expected3);
+        assert(aes256.encryptCBC(test4, key256, iv4) == expected4);
+    }
+
+    /**
+     * Decrypt the given text with the given key
+     *
+     * CBC mode:
+     * The previous block cipher is added to the plaintext block before the next
+     * cipher is run. The initialization vector is added to the first block.
+     *
+     * Params:
+     *      text = The text
+     *      key = The key
+     *      iv = The initialization vector
+     *
+     * Returns:
+     *      The decrypted text
+     */
+
+    string decryptCBC ( string text, string key, ubyte[] iv )
+    {
+        enforce(key.length == BitSize / 8, format("AES%d: Invalid key length", BitSize));
+        enforce(iv.length == BLOCK_SIZE, format("AES%d: Invalid initialization vector length", BitSize));
+
+        string result;
+
+        this.state = State.init;
+        this.addToState(iv);
+        this.expanded = rijndaelExpandKey(key.toBytes());
+
+        auto bytes = text.toBytes();
+        auto prev_cipher = iv;
+
+        /*
+            For each block:
+            - Store block as CUR_CIPHER
+            - Decrypt the block
+            - Add PREV_CIPHER to state (add iv for first block)
+            - PREV_CIPHER = CUR_CIPHER
+        */
+
+        for ( auto i = 0; i < bytes.length; i+= BLOCK_SIZE )
+        {
+            ubyte[] cur_cipher;
+
+            if ( i + BLOCK_SIZE <= bytes.length )
+            {
+                cur_cipher = bytes[i .. i + BLOCK_SIZE];
+            }
+            else
+            {
+                cur_cipher = bytes[i .. $].pkcs7Pad(BLOCK_SIZE);
+            }
+
+            this.state = toState(cur_cipher.paddedSplitN(4, 0));
+            this.decryptBlock();
+            this.addToState(prev_cipher);
+
+            prev_cipher = cur_cipher;
+            result ~= fromState(this.state).flatten().fromBytes();
+        }
+
+        result.length = text.length;
+
+        return result;
+    }
+
+    unittest
+    {
+        // Test vectors: http://www.inconteam.com/software-development/41-encryption/55-aes-test-vectors#aes-cbc
+
+        auto aes128 = AES!128();
+        auto key128 = "2b7e151628aed2a6abf7158809cf4f3c".decodeHex();
+
+        auto test1 = "6bc1bee22e409f96e93d7e117393172a".decodeHex();
+        auto iv1 = "000102030405060708090A0B0C0D0E0F".decodeHex().toBytes();
+        auto cipher1 = "7649abac8119b246cee98e9b12e9197d".decodeHex();
+        auto test2 = "ae2d8a571e03ac9c9eb76fac45af8e51".decodeHex();
+        auto iv2 = "7649ABAC8119B246CEE98E9B12E9197D".decodeHex().toBytes();
+        auto cipher2 = "5086cb9b507219ee95db113a917678b2".decodeHex();
+        auto test3 = "30c81c46a35ce411e5fbc1191a0a52ef".decodeHex();
+        auto iv3 = "5086CB9B507219EE95DB113A917678B2".decodeHex().toBytes();
+        auto cipher3 = "73bed6b8e3c1743b7116e69e22229516".decodeHex();
+        auto test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
+        auto iv4 = "73BED6B8E3C1743B7116E69E22229516".decodeHex().toBytes();
+        auto cipher4 = "3ff1caa1681fac09120eca307586e1a7".decodeHex();
+
+        assert(aes128.decryptCBC(cipher1, key128, iv1) == test1);
+        assert(aes128.decryptCBC(cipher2, key128, iv2) == test2);
+        assert(aes128.decryptCBC(cipher3, key128, iv3) == test3);
+        assert(aes128.decryptCBC(cipher4, key128, iv4) == test4);
+
+        auto aes192 = AES!192();
+        auto key192 = "8e73b0f7da0e6452c810f32b809079e562f8ead2522c6b7b".decodeHex();
+
+        test1 = "6bc1bee22e409f96e93d7e117393172a".decodeHex();
+        iv1 = "000102030405060708090A0B0C0D0E0F".decodeHex().toBytes();
+        cipher1 = "4f021db243bc633d7178183a9fa071e8".decodeHex();
+        test2 = "ae2d8a571e03ac9c9eb76fac45af8e51".decodeHex();
+        iv2 = "4F021DB243BC633D7178183A9FA071E8".decodeHex().toBytes();
+        cipher2 = "b4d9ada9ad7dedf4e5e738763f69145a".decodeHex();
+        test3 = "30c81c46a35ce411e5fbc1191a0a52ef".decodeHex();
+        iv3 = "B4D9ADA9AD7DEDF4E5E738763F69145A".decodeHex().toBytes();
+        cipher3 = "571b242012fb7ae07fa9baac3df102e0".decodeHex();
+        test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
+        iv4 = "571B242012FB7AE07FA9BAAC3DF102E0".decodeHex().toBytes();
+        cipher4 = "08b0e27988598881d920a9e64f5615cd".decodeHex();
+
+        assert(aes192.decryptCBC(cipher1, key192, iv1) == test1);
+        assert(aes192.decryptCBC(cipher2, key192, iv2) == test2);
+        assert(aes192.decryptCBC(cipher3, key192, iv3) == test3);
+        assert(aes192.decryptCBC(cipher4, key192, iv4) == test4);
+
+        auto aes256 = AES!256();
+        auto key256 = "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4".decodeHex();
+
+        test1 = "6bc1bee22e409f96e93d7e117393172a".decodeHex();
+        iv1 = "000102030405060708090A0B0C0D0E0F".decodeHex().toBytes();
+        cipher1 = "f58c4c04d6e5f1ba779eabfb5f7bfbd6".decodeHex();
+        test2 = "ae2d8a571e03ac9c9eb76fac45af8e51".decodeHex();
+        iv2 = "F58C4C04D6E5F1BA779EABFB5F7BFBD6".decodeHex().toBytes();
+        cipher2 = "9cfc4e967edb808d679f777bc6702c7d".decodeHex();
+        test3 = "30c81c46a35ce411e5fbc1191a0a52ef".decodeHex();
+        iv3 = "9CFC4E967EDB808D679F777BC6702C7D".decodeHex().toBytes();
+        cipher3 = "39f23369a9d9bacfa530e26304231461".decodeHex();
+        test4 = "f69f2445df4f9b17ad2b417be66c3710".decodeHex();
+        iv4 = "39F23369A9D9BACFA530E26304231461".decodeHex().toBytes();
+        cipher4 = "b2eb05e2c39be9fcda6c19078c6a9d1b".decodeHex();
+
+        assert(aes256.decryptCBC(cipher1, key256, iv1) == test1);
+        assert(aes256.decryptCBC(cipher2, key256, iv2) == test2);
+        assert(aes256.decryptCBC(cipher3, key256, iv3) == test3);
+        assert(aes256.decryptCBC(cipher4, key256, iv4) == test4);
+    }
+
+    /**
+     * Add the given bytes to the state with XOR
+     *
+     * Params:
+     *      bytes = The bytes
+     */
+
+    private void addToState ( ubyte[] bytes )
+    in
+    {
+        assert(bytes.length == State.sizeof);
+    }
+    body
+    {
+        for ( auto i = 0; i < 4; i++ )
+        {
+            for ( auto j = 0; j < 4; j++ )
+            {
+                this.state[j][i] ^= bytes[i * 4 + j];
+            }
+        }
     }
 
     /**
@@ -604,275 +863,4 @@ struct AES ( uint BitSize )
             }
         }
     }
-}
-
-/**
- * Utility alias for a 32-bit word
- */
-
-alias RIJNDAEL_WORD = ubyte[4];
-
-static assert(RIJNDAEL_WORD.sizeof == 4);
-
-/**
- * From https://en.wikipedia.org/wiki/Rijndael_S-box
- */
-
-enum ubyte[] RIJNDAEL_SBOX = [
-    0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
-    0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
-    0xB7, 0xFD, 0x93, 0x26, 0x36, 0x3F, 0xF7, 0xCC, 0x34, 0xA5, 0xE5, 0xF1, 0x71, 0xD8, 0x31, 0x15,
-    0x04, 0xC7, 0x23, 0xC3, 0x18, 0x96, 0x05, 0x9A, 0x07, 0x12, 0x80, 0xE2, 0xEB, 0x27, 0xB2, 0x75,
-    0x09, 0x83, 0x2C, 0x1A, 0x1B, 0x6E, 0x5A, 0xA0, 0x52, 0x3B, 0xD6, 0xB3, 0x29, 0xE3, 0x2F, 0x84,
-    0x53, 0xD1, 0x00, 0xED, 0x20, 0xFC, 0xB1, 0x5B, 0x6A, 0xCB, 0xBE, 0x39, 0x4A, 0x4C, 0x58, 0xCF,
-    0xD0, 0xEF, 0xAA, 0xFB, 0x43, 0x4D, 0x33, 0x85, 0x45, 0xF9, 0x02, 0x7F, 0x50, 0x3C, 0x9F, 0xA8,
-    0x51, 0xA3, 0x40, 0x8F, 0x92, 0x9D, 0x38, 0xF5, 0xBC, 0xB6, 0xDA, 0x21, 0x10, 0xFF, 0xF3, 0xD2,
-    0xCD, 0x0C, 0x13, 0xEC, 0x5F, 0x97, 0x44, 0x17, 0xC4, 0xA7, 0x7E, 0x3D, 0x64, 0x5D, 0x19, 0x73,
-    0x60, 0x81, 0x4F, 0xDC, 0x22, 0x2A, 0x90, 0x88, 0x46, 0xEE, 0xB8, 0x14, 0xDE, 0x5E, 0x0B, 0xDB,
-    0xE0, 0x32, 0x3A, 0x0A, 0x49, 0x06, 0x24, 0x5C, 0xC2, 0xD3, 0xAC, 0x62, 0x91, 0x95, 0xE4, 0x79,
-    0xE7, 0xC8, 0x37, 0x6D, 0x8D, 0xD5, 0x4E, 0xA9, 0x6C, 0x56, 0xF4, 0xEA, 0x65, 0x7A, 0xAE, 0x08,
-    0xBA, 0x78, 0x25, 0x2E, 0x1C, 0xA6, 0xB4, 0xC6, 0xE8, 0xDD, 0x74, 0x1F, 0x4B, 0xBD, 0x8B, 0x8A,
-    0x70, 0x3E, 0xB5, 0x66, 0x48, 0x03, 0xF6, 0x0E, 0x61, 0x35, 0x57, 0xB9, 0x86, 0xC1, 0x1D, 0x9E,
-    0xE1, 0xF8, 0x98, 0x11, 0x69, 0xD9, 0x8E, 0x94, 0x9B, 0x1E, 0x87, 0xE9, 0xCE, 0x55, 0x28, 0xDF,
-    0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
-];
-
-static assert(RIJNDAEL_SBOX.length == ubyte.max + 1);
-
-/**
- * From https://en.wikipedia.org/wiki/Rijndael_S-box#Inverse_S-box
- */
-
-enum ubyte[] RIJNDAEL_INVSBOX = [
-    0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
-    0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
-    0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
-    0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25,
-    0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92,
-    0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84,
-    0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06,
-    0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b,
-    0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73,
-    0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e,
-    0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b,
-    0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4,
-    0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f,
-    0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef,
-    0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
-    0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
-];
-
-static assert(RIJNDAEL_INVSBOX.length == ubyte.max + 1);
-
-/**
- * From https://en.wikipedia.org/wiki/Rijndael_key_schedule#Rcon
- */
-
-enum ubyte[] RIJNDAEL_RCON = [
-    0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a,
-    0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39,
-    0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a,
-    0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8,
-    0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef,
-    0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc,
-    0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b,
-    0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3,
-    0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94,
-    0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20,
-    0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35,
-    0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd, 0x61, 0xc2, 0x9f,
-    0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d, 0x01, 0x02, 0x04,
-    0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63,
-    0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91, 0x39, 0x72, 0xe4, 0xd3, 0xbd,
-    0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d
-];
-
-static assert(RIJNDAEL_RCON.length == ubyte.max + 1);
-
-/**
- * Supported key sizes and their expected expanded key sizes
- */
-
-enum EXPANDED_SIZES = [
-    16: 176,
-    24: 208,
-    32: 240
-];
-
-/**
- * Expand an AES key
- *
- * From https://en.wikipedia.org/wiki/Rijndael_key_schedule#The_key_schedule
- *
- * Params:
- *      key = The key
- *
- * Returns:
- *      The expanded key
- */
-
-ubyte[] rijndaelExpandKey ( ubyte[] key )
-in
-{
-    assert(key.length in EXPANDED_SIZES);
-}
-out ( res )
-{
-    assert(res.length == EXPANDED_SIZES[key.length]);
-}
-body
-{
-    // Set the first SIZE bytes of the expaned key to the cipher key
-    ubyte[] result;
-    result.length = EXPANDED_SIZES[key.length];
-    result[0 .. key.length] = key;
-
-    auto cur_len = key.length;
-    auto rcon_iter = cast(ubyte)1;
-
-    while ( cur_len < EXPANDED_SIZES[key.length] )
-    {
-        RIJNDAEL_WORD word = result[cur_len - RIJNDAEL_WORD.sizeof .. cur_len];
-
-        // Every SIZE bytes, run the core on the word to be added
-        // Increment the rcon counter
-        if ( cur_len % key.length == 0 )
-        {
-            word = rijndaelKeyScheduleCore(word, rcon_iter);
-            rcon_iter++;
-        }
-
-        // For 256-bit cipher keys, add an sbox to the calculation
-        if ( key.length == 32 && cur_len % key.length == 16 )
-        {
-            foreach ( ref b; word )
-            {
-                b = RIJNDAEL_SBOX[b];
-            }
-        }
-
-        // XOR the new word with the word SIZE blocks before this one
-        foreach ( i, b; word )
-        {
-            result[cur_len + i] = result[cur_len + i - key.length] ^ b;
-        }
-
-        cur_len += word.length;
-    }
-
-    return result;
-}
-
-unittest
-{
-    /**
-     * The tests performed here are the test vectors from:
-     * http://www.samiam.org/key-schedule.html
-     */
-
-    auto input_128 = "000102030405060708090a0b0c0d0e0f".decodeHex().toBytes();
-    auto res_128 =
-    "000102030405060708090a0b0c0d0e0f"
-    "d6aa74fdd2af72fadaa678f1d6ab76fe"
-    "b692cf0b643dbdf1be9bc5006830b3fe"
-    "b6ff744ed2c2c9bf6c590cbf0469bf41"
-    "47f7f7bc95353e03f96c32bcfd058dfd"
-    "3caaa3e8a99f9deb50f3af57adf622aa"
-    "5e390f7df7a69296a7553dc10aa31f6b"
-    "14f9701ae35fe28c440adf4d4ea9c026"
-    "47438735a41c65b9e016baf4aebf7ad2"
-    "549932d1f08557681093ed9cbe2c974e"
-    "13111d7fe3944a17f307a78b4d2b30c5";
-
-    assert(rijndaelExpandKey(input_128) == res_128.decodeHex().toBytes());
-
-    auto input_192 = "000102030405060708090a0b0c0d0e0f1011121314151617".decodeHex().toBytes();
-    auto res_192 =
-    "000102030405060708090a0b0c0d0e0f"
-    "10111213141516175846f2f95c43f4fe"
-    "544afef55847f0fa4856e2e95c43f4fe"
-    "40f949b31cbabd4d48f043b810b7b342"
-    "58e151ab04a2a5557effb5416245080c"
-    "2ab54bb43a02f8f662e3a95d66410c08"
-    "f501857297448d7ebdf1c6ca87f33e3c"
-    "e510976183519b6934157c9ea351f1e0"
-    "1ea0372a995309167c439e77ff12051e"
-    "dd7e0e887e2fff68608fc842f9dcc154"
-    "859f5f237a8d5a3dc0c02952beefd63a"
-    "de601e7827bcdf2ca223800fd8aeda32"
-    "a4970a331a78dc09c418c271e3a41d5d";
-
-    assert(rijndaelExpandKey(input_192) == res_192.decodeHex().toBytes());
-
-    auto input_256 = "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f".decodeHex().toBytes();
-    auto res_256 =
-    "000102030405060708090a0b0c0d0e0f"
-    "101112131415161718191a1b1c1d1e1f"
-    "a573c29fa176c498a97fce93a572c09c"
-    "1651a8cd0244beda1a5da4c10640bade"
-    "ae87dff00ff11b68a68ed5fb03fc1567"
-    "6de1f1486fa54f9275f8eb5373b8518d"
-    "c656827fc9a799176f294cec6cd5598b"
-    "3de23a75524775e727bf9eb45407cf39"
-    "0bdc905fc27b0948ad5245a4c1871c2f"
-    "45f5a66017b2d387300d4d33640a820a"
-    "7ccff71cbeb4fe5413e6bbf0d261a7df"
-    "f01afafee7a82979d7a5644ab3afe640"
-    "2541fe719bf500258813bbd55a721c0a"
-    "4e5a6699a9f24fe07e572baacdf8cdea"
-    "24fc79ccbf0979e9371ac23c6d68de36";
-}
-
-/**
- * Rijndael key schedule core
- *
- * From https://en.wikipedia.org/wiki/Rijndael_key_schedule#Key_schedule_core
- *
- * Params:
- *      word = The word
- *      iter = The iteration number
- *
- * Returns:
- *      The scheduled key
- */
-
-RIJNDAEL_WORD rijndaelKeyScheduleCore ( RIJNDAEL_WORD word, ubyte iter )
-{
-    RIJNDAEL_WORD result;
-
-    auto rotated = rijndaelRotate(word);
-
-    foreach ( i, b; rotated )
-    {
-        result[i] = RIJNDAEL_SBOX[b];
-    }
-
-    result[0] = result[0] ^ RIJNDAEL_RCON[iter];
-
-    return result;
-}
-
-unittest
-{
-    assert(rijndaelKeyScheduleCore([0x1d, 0x2c, 0x3a, 0x4f], 1) == [0x70, 0x80, 0x84, 0xa4]);
-}
-
-/**
- * Rotate a word 8 bits to the left
- *
- * Params:
- *      word = The word
- *
- * Returns:
- *      The rotated word
- */
-
-RIJNDAEL_WORD rijndaelRotate ( RIJNDAEL_WORD word )
-{
-    return [word[1], word[2], word[3], word[0]];
-}
-
-unittest
-{
-    assert(rijndaelRotate([0x1d, 0x2c, 0x3a, 0x4f]) == [0x2c, 0x3a, 0x4f, 0x1d]);
 }
