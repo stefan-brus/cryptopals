@@ -146,8 +146,6 @@ struct AES ( uint BitSize )
             result ~= fromState(this.state).flatten().fromBytes();
         }
 
-        result.length = text.length;
-
         return result;
     }
 
@@ -247,8 +245,6 @@ struct AES ( uint BitSize )
             this.decryptBlock();
             result ~= fromState(this.state).flatten().fromBytes();
         }
-
-        result.length = text.length;
 
         return result;
     }
@@ -353,8 +349,6 @@ struct AES ( uint BitSize )
             result ~= fromState(this.state).flatten().fromBytes();
         }
 
-        result.length = text.length;
-
         return result;
     }
 
@@ -456,14 +450,6 @@ struct AES ( uint BitSize )
         auto bytes = text.toBytes();
         auto prev_cipher = iv;
 
-        /*
-            For each block:
-            - Store block as CUR_CIPHER
-            - Decrypt the block
-            - Add PREV_CIPHER to state (add iv for first block)
-            - PREV_CIPHER = CUR_CIPHER
-        */
-
         for ( auto i = 0; i < bytes.length; i+= BLOCK_SIZE )
         {
             ubyte[] cur_cipher;
@@ -484,8 +470,6 @@ struct AES ( uint BitSize )
             prev_cipher = cur_cipher;
             result ~= fromState(this.state).flatten().fromBytes();
         }
-
-        result.length = text.length;
 
         return result;
     }
